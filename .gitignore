@@ -17,8 +17,10 @@ RawBlameHistory
 49 lines (34 sloc)  697 Bytes
 # Logs
 logs
+public
 *.log
 npm-debug.log*
+
 
 # Runtime data
 pids
