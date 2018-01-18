@@ -4,6 +4,7 @@ export default class GLInstance {
     constructor (canvas) {
         this.canvas = canvas
         this.gl     = canvas.getContext('webgl2')
+        
         if (!this.gl) console.error('WebGL2.0 is not supported.')
 
         this.meshesCache = []

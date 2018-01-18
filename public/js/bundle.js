@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -76,10 +76,104 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.getStandardAttribLocations = exports.makeProgram = undefined;
+
+var _glConstants = __webpack_require__(1);
+
+var constants = _interopRequireWildcard(_glConstants);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var makeShader = function makeShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
+
+    console.log(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+};
+
+// Export methods
+
+var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShaderSource, fragmentShaderSource) {
+    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+    var vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = gl.createProgram();
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Failed to link program:');
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        return;
+    }
+
+    if (doValidate) {
+        gl.validateProgram(program);
+        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+            console.error('Failed to validate the program:');
+            console.log(gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+            return;
+        }
+    }
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    return program;
+};
+
+// Get the locations of standard attributes that are mostly used.
+// Location will be -1 if attribute is not found
+var getStandardAttribLocations = exports.getStandardAttribLocations = function getStandardAttribLocations(gl, program) {
+    return {
+        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
+        normal: gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
+        uvs: gl.getAttribLocation(program, constants.ATTR_UV_NAME)
+    };
+};
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+// Global constants
+var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
+var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
+var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
+var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
+var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
+var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _glConstants = __webpack_require__(4);
+var _glConstants = __webpack_require__(1);
 
 var constants = _interopRequireWildcard(_glConstants);
 
@@ -93,6 +187,7 @@ var GLInstance = function () {
 
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2');
+
         if (!this.gl) console.error('WebGL2.0 is not supported.');
 
         this.meshesCache = [];
@@ -224,7 +319,7 @@ var GLInstance = function () {
 exports.default = GLInstance;
 
 /***/ }),
-/* 1 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -279,7 +374,7 @@ var RenderLoop = function () {
 exports.default = RenderLoop;
 
 /***/ }),
-/* 2 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -288,74 +383,63 @@ exports.default = RenderLoop;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.getStandardAttribLocations = exports.makeProgram = undefined;
 
-var _glConstants = __webpack_require__(4);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var constants = _interopRequireWildcard(_glConstants);
+var _utils = __webpack_require__(0);
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var makeShader = function makeShader(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
+var Shader = function () {
+    function Shader(gl, vertexShaderSource, fragmentShaderSource) {
+        _classCallCheck(this, Shader);
 
-    console.log(gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-};
+        this.program = (0, _utils.makeProgram)(gl, vertexShaderSource, fragmentShaderSource);
 
-// Export methods
-
-var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShaderSource, fragmentShaderSource) {
-    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-
-    var vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = gl.createProgram();
-
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Failed to link program:');
-        console.log(gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-        return;
-    }
-
-    if (doValidate) {
-        gl.validateProgram(program);
-        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-            console.error('Failed to validate the program:');
-            console.log(gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
-            return;
+        if (this.program) {
+            this.gl = gl;
+            gl.useProgram(this.program);
+            this.attribLocations = getStandardAttribLocations(gl, this.program);
+            this.uniformLocations = {}; // todo
         }
     }
 
-    gl.deleteShader(vertexShader);
-    gl.deleteShader(fragmentShader);
+    _createClass(Shader, [{
+        key: 'init',
+        value: function init() {}
+    }, {
+        key: 'renderModel',
+        value: function renderModel() {}
+    }, {
+        key: 'activate',
+        value: function activate() {
+            this.gl.useProgram(this.program);
+            return this;
+        }
+    }, {
+        key: 'deactivate',
+        value: function deactivate() {
+            this.gl.useProgram(null);
+            return this;
+        }
 
-    return program;
-};
+        // for when the shader is no longer needed
 
-// Get the locations of standard attributes that are mostly used.
-// Location will be -1 if attribute is not found
-var getStandardAttribLocations = exports.getStandardAttribLocations = function getStandardAttribLocations(gl, program) {
-    return {
-        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
-        normal: gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
-        uvs: gl.getAttribLocation(program, constants.ATTR_UV_NAME)
-    };
-};
+    }, {
+        key: 'dispose',
+        value: function dispose() {
+            if (this.gl.getParameter(this.gl.CURRENT_PROGRAM) === this.program) this.gl.useProgram(null);
+            this.gl.deleteProgram(this.program);
+        }
+    }]);
+
+    return Shader;
+}();
+
+exports.default = Shader;
 
 /***/ }),
-/* 3 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -363,17 +447,17 @@ var getStandardAttribLocations = exports.getStandardAttribLocations = function g
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _utils = __webpack_require__(2);
+var _utils = __webpack_require__(0);
 
-var _glInstance = __webpack_require__(0);
+var _glInstance = __webpack_require__(2);
 
 var _glInstance2 = _interopRequireDefault(_glInstance);
 
-var _shader = __webpack_require__(5);
+var _shader = __webpack_require__(4);
 
 var _shader2 = _interopRequireDefault(_shader);
 
-var _renderLoop = __webpack_require__(1);
+var _renderLoop = __webpack_require__(3);
 
 var _renderLoop2 = _interopRequireDefault(_renderLoop);
 
@@ -442,89 +526,6 @@ renderLoop.start(function (deltaTime) {
     glInstance.clear();
     gl.drawArrays(gl.POINT, 0, 1);
 });
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-// Global constants
-var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
-var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
-var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
-var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
-var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
-var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _utils = __webpack_require__(2);
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Shader = function () {
-    function Shader(gl, vertexShaderSource, fragmentShaderSource) {
-        _classCallCheck(this, Shader);
-
-        this.program = (0, _utils.makeProgram)(gl, vertexShaderSource, fragmentShaderSource);
-
-        if (this.program) {
-            this.gl = gl;
-            gl.useProgram(this.program);
-            this.attribLocations = getStandardAttribLocations(gl, this.program);
-            this.uniformLocations = {}; // todo
-        }
-    }
-
-    _createClass(Shader, [{
-        key: 'init',
-        value: function init() {}
-    }, {
-        key: 'renderModel',
-        value: function renderModel() {}
-    }, {
-        key: 'activate',
-        value: function activate() {
-            this.gl.useProgram(this.program);
-            return this;
-        }
-    }, {
-        key: 'deactivate',
-        value: function deactivate() {
-            this.gl.useProgram(null);
-            return this;
-        }
-
-        // for when the shader is no longer needed
-
-    }, {
-        key: 'dispose',
-        value: function dispose() {
-            if (this.gl.getParameter(this.gl.CURRENT_PROGRAM) === this.program) this.gl.useProgram(null);
-            this.gl.deleteProgram(this.program);
-        }
-    }]);
-
-    return Shader;
-}();
-
-exports.default = Shader;
 
 /***/ })
 /******/ ]);
