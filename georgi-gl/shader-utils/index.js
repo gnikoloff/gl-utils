@@ -1,3 +1,5 @@
+import * as constants from '../core/gl-constants'
+
 export const makeShader = (gl, type, source) => {
     const shader = gl.createShader(type)
     gl.shaderSource(shader, source)
@@ -37,4 +39,14 @@ export const makeProgram = (gl, vertexShader, fragmentShader, doValidate = false
     gl.deleteShader(fragmentShader)
 
     return program
+}
+
+// Get the locations of standard attributes that are mostly used.
+// Location will be -1 if attribute is not found
+export const getStandardAttribLocations = (gl, program) => {
+    return {
+        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
+        normal:   gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
+        uvs:      gl.getAttribLocation(program, constants.ATTR_UV_NAME)
+    }
 }

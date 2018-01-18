@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,55 +73,16 @@
 "use strict";
 
 
-var _glUtils = __webpack_require__(2);
-
-var _glInstance = __webpack_require__(1);
-
-var _glInstance2 = _interopRequireDefault(_glInstance);
-
-var _renderLoop = __webpack_require__(4);
-
-var _renderLoop2 = _interopRequireDefault(_renderLoop);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var vertexShaderSource = '#version 300 es\n    in vec3 a_position;\n\n    uniform float u_pointSize;\n\n    void main () {\n        gl_PointSize = u_pointSize;\n        gl_Position = vec4(a_position, 1.0);\n    }\n';
-var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n    out vec4 finalColor;\n\n    void main () {\n        float dist = distance(gl_PointCoord, vec2(0.5));\n        if (dist < 0.5) {\n            finalColor = vec4(0.0, 0.0, 0.0, 1.0);\n        } else {\n            discard;\n        }\n    }\n';
-
-var w = window.innerWidth;
-var h = window.innerHeight;
-var oldTime = 0;
-
-var canvas = document.createElement('canvas');
-document.body.appendChild(canvas);
-
-var renderLoop = new _renderLoop2.default();
-var glInstance = new _glInstance2.default(canvas).setSize(w / 3, h / 3).clear();
-var gl = glInstance.getContext();
-
-var vertexShader = (0, _glUtils.makeShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
-var fragmentShader = (0, _glUtils.makeShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-var program = (0, _glUtils.makeProgram)(gl, vertexShader, fragmentShader);
-
-gl.useProgram(program);
-var a_positionLocation = gl.getAttribLocation(program, 'a_position');
-var u_pointSizeLocation = gl.getUniformLocation(program, 'u_pointSize');
-gl.useProgram(null);
-
-var positions = new Float32Array([0.0, 0.0, 0.0]);
-var positionBuffer = glInstance.createArrayBuffer(positions);
-
-gl.useProgram(program);
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.enableVertexAttribArray(a_positionLocation);
-gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-renderLoop.start(function (deltaTime) {
-    gl.uniform1f(u_pointSizeLocation, 200.0);
-    glInstance.clear();
-    gl.drawArrays(gl.POINT, 0, 1);
-    console.log(deltaTime);
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
+// Global constants
+var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
+var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
+var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
+var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
+var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
+var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
 
 /***/ }),
 /* 1 */
@@ -136,7 +97,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _glConstants = __webpack_require__(5);
+var _glConstants = __webpack_require__(0);
 
 var constants = _interopRequireWildcard(_glConstants);
 
@@ -237,8 +198,10 @@ var GLInstance = function () {
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
             }
 
-            // clean up
-            // unbind the VAO - very important!
+            // clean up time
+
+            // very important!
+            // unbind the VAO
             gl.bindVertexArray(null);
             // unbind any buffers that might be set
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -280,60 +243,6 @@ exports.default = GLInstance;
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var makeShader = exports.makeShader = function makeShader(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
-
-    console.log(gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-};
-
-var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShader, fragmentShader) {
-    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-
-    var program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error("Failed to link program:");
-        console.log(gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-        return;
-    }
-
-    if (doValidate) {
-        gl.validateProgram(program);
-        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-            console.error("Failed to validate the program:");
-            console.log(gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
-            return;
-        }
-    }
-
-    gl.deleteShader(vertexShader);
-    gl.deleteShader(fragmentShader);
-
-    return program;
-};
-
-/***/ }),
-/* 3 */,
-/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -387,22 +296,132 @@ var RenderLoop = function () {
 exports.default = RenderLoop;
 
 /***/ }),
-/* 5 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
-// Global constants
-var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
-var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
-var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
-var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
-var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
-var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
+exports.getStandardAttribLocations = exports.makeProgram = exports.makeShader = undefined;
+
+var _glConstants = __webpack_require__(0);
+
+var constants = _interopRequireWildcard(_glConstants);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var makeShader = exports.makeShader = function makeShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
+
+    console.log(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+};
+
+var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShader, fragmentShader) {
+    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Failed to link program:');
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        return;
+    }
+
+    if (doValidate) {
+        gl.validateProgram(program);
+        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+            console.error('Failed to validate the program:');
+            console.log(gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+            return;
+        }
+    }
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    return program;
+};
+
+// Get the locations of standard attributes that are mostly used.
+// Location will be -1 if attribute is not found
+var getStandardAttribLocations = exports.getStandardAttribLocations = function getStandardAttribLocations(gl, program) {
+    return {
+        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
+        normal: gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
+        uvs: gl.getAttribLocation(program, constants.ATTR_UV_NAME)
+    };
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _shaderUtils = __webpack_require__(3);
+
+var _glInstance = __webpack_require__(1);
+
+var _glInstance2 = _interopRequireDefault(_glInstance);
+
+var _renderLoop = __webpack_require__(2);
+
+var _renderLoop2 = _interopRequireDefault(_renderLoop);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var vertexShaderSource = '#version 300 es\n    in vec3 a_position;\n\n    uniform float u_pointSize;\n\n    void main () {\n        gl_PointSize = u_pointSize;\n        gl_Position = vec4(a_position, 1.0);\n    }\n';
+var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n    out vec4 finalColor;\n\n    void main () {\n        float dist = distance(gl_PointCoord, vec2(0.5));\n        if (dist < 0.5) {\n            finalColor = vec4(0.0, 0.0, 0.0, 1.0);\n        } else {\n            discard;\n        }\n    }\n';
+
+var w = window.innerWidth;
+var h = window.innerHeight;
+var oldTime = 0;
+
+var canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
+
+var renderLoop = new _renderLoop2.default();
+var glInstance = new _glInstance2.default(canvas).setSize(w / 3, h / 3).clear();
+var gl = glInstance.getContext();
+
+var vertexShader = (0, _shaderUtils.makeShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
+var fragmentShader = (0, _shaderUtils.makeShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+var program = (0, _shaderUtils.makeProgram)(gl, vertexShader, fragmentShader);
+
+gl.useProgram(program);
+var a_positionLocation = gl.getAttribLocation(program, 'a_position');
+var u_pointSizeLocation = gl.getUniformLocation(program, 'u_pointSize');
+gl.useProgram(null);
+
+var positions = new Float32Array([0.0, 0.0, 0.0]);
+var positionBuffer = glInstance.createArrayBuffer(positions);
+
+gl.useProgram(program);
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.enableVertexAttribArray(a_positionLocation);
+gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+renderLoop.start(function (deltaTime) {
+    gl.uniform1f(u_pointSizeLocation, 200.0);
+    glInstance.clear();
+    gl.drawArrays(gl.POINT, 0, 1);
+    console.log(deltaTime);
+});
 
 /***/ })
 /******/ ]);

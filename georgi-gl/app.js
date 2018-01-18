@@ -1,4 +1,4 @@
-import { makeShader, makeProgram } from './gl-utils'
+import { makeShader, makeProgram } from './shader-utils'
 import GLInstance from './core/gl-instance'
 import RenderLoop from './core/render-loop'
 

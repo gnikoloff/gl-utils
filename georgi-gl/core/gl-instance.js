@@ -84,8 +84,10 @@ export default class GLInstance {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
         }
 
-        // clean up
-        // unbind the VAO - very important!
+        // clean up time
+
+        // very important!
+        // unbind the VAO
         gl.bindVertexArray(null)
         // unbind any buffers that might be set
         gl.bindBuffer(gl.ARRAY_BUFFER, null)
