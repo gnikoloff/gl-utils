@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "webpack -p",
-    "dev":   "webpack --watch"
+    "dev": "webpack --watch"
   },
   "author": "",
   "license": "ISC",
