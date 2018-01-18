@@ -1,5 +1,6 @@
-import GLInstance from './core/gl-instance'
 import { makeShader, makeProgram } from './gl-utils'
+import GLInstance from './core/gl-instance'
+import RenderLoop from './core/render-loop'
 
 const vertexShaderSource = `#version 300 es
     in vec3 a_position;
@@ -28,10 +29,12 @@ const fragmentShaderSource = `#version 300 es
 
 let w = window.innerWidth
 let h = window.innerHeight
+let oldTime = 0
 
 const canvas = document.createElement('canvas')
 document.body.appendChild(canvas)
 
+const renderLoop = new RenderLoop()
 const glInstance = new GLInstance(canvas).setSize(w / 3, h / 3).clear()
 const gl = glInstance.getContext()
 
@@ -48,20 +51,13 @@ const positions = new Float32Array([ 0.0, 0.0, 0.0 ])
 const positionBuffer = glInstance.createArrayBuffer(positions)
 
 gl.useProgram(program)
-
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 gl.enableVertexAttribArray(a_positionLocation)
 gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0)
 
-onRenderFrame()
-function onRenderFrame () {
-    const newTime = window.performance.now() / 1000
-    const delta = newTime - oldTime
-    oldTime = newTime
-
-    window.requestAnimationFrame(onRenderFrame)
-    
-    gl.uniform1f(u_pointSizeLocation, 5.0 + Math.sin(oldTime) * 50.0)
+renderLoop.start((deltaTime) => {
+    gl.uniform1f(u_pointSizeLocation, 200.0)
     glInstance.clear()
-    gl.drawArrays(gl.POINT, 0, 1)    
-}
+    gl.drawArrays(gl.POINT, 0, 1) 
+    console.log(deltaTime)   
+})
