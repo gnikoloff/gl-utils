@@ -12,6 +12,7 @@ export default class RenderLoop {
     stop (cb) {
         window.cancelAnimationFrame(this.rAf)
         if (cb) cb()
+        this.cb = null
     }
     updateAnimationFrame () {
         this.rAf = window.requestAnimationFrame(this.updateAnimationFrame)

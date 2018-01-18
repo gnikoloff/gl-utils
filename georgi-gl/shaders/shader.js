@@ -1,8 +1,8 @@
-import { createProgram, getStandardAttribLocations } from '../shader-utils'
+import { makeProgram } from './utils'
 
 export default class Shader {
     constructor (gl, vertexShaderSource, fragmentShaderSource) {
-        this.program = createProgram(gl, vertexShaderSource, fragmentShaderSource)
+        this.program = makeProgram(gl, vertexShaderSource, fragmentShaderSource)
 
         if (this.program) {
             this.gl = gl
@@ -14,6 +14,8 @@ export default class Shader {
     }
 
     init () {}
+
+    renderModel () {}
 
     activate () {
         this.gl.useProgram(this.program)

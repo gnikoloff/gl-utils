@@ -1,6 +1,5 @@
 import * as constants from './gl-constants'
 
-
 export default class GLInstance {
     constructor (canvas) {
         this.canvas = canvas

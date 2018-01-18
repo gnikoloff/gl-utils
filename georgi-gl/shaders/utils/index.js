@@ -1,6 +1,6 @@
-import * as constants from '../core/gl-constants'
+import * as constants from '../../core/gl-constants'
 
-export const makeShader = (gl, type, source) => {
+const makeShader = (gl, type, source) => {
     const shader = gl.createShader(type)
     gl.shaderSource(shader, source)
     gl.compileShader(shader)
@@ -10,8 +10,13 @@ export const makeShader = (gl, type, source) => {
     gl.deleteShader(shader)
 }
 
-export const makeProgram = (gl, vertexShader, fragmentShader, doValidate = false) => {
+// Export methods
+
+export const makeProgram = (gl, vertexShaderSource, fragmentShaderSource, doValidate = false) => {
+    const vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
+    const fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
     const program = gl.createProgram()
+
     gl.attachShader(program, vertexShader)
     gl.attachShader(program, fragmentShader)
     gl.linkProgram(program)

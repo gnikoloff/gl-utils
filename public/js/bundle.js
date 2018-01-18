@@ -63,29 +63,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-// Global constants
-var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
-var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
-var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
-var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
-var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
-var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
-
-/***/ }),
-/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -97,7 +79,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _glConstants = __webpack_require__(0);
+var _glConstants = __webpack_require__(4);
 
 var constants = _interopRequireWildcard(_glConstants);
 
@@ -242,7 +224,7 @@ var GLInstance = function () {
 exports.default = GLInstance;
 
 /***/ }),
-/* 2 */
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -277,6 +259,7 @@ var RenderLoop = function () {
         value: function stop(cb) {
             window.cancelAnimationFrame(this.rAf);
             if (cb) cb();
+            this.cb = null;
         }
     }, {
         key: "updateAnimationFrame",
@@ -296,7 +279,7 @@ var RenderLoop = function () {
 exports.default = RenderLoop;
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -305,15 +288,15 @@ exports.default = RenderLoop;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.getStandardAttribLocations = exports.makeProgram = exports.makeShader = undefined;
+exports.getStandardAttribLocations = exports.makeProgram = undefined;
 
-var _glConstants = __webpack_require__(0);
+var _glConstants = __webpack_require__(4);
 
 var constants = _interopRequireWildcard(_glConstants);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var makeShader = exports.makeShader = function makeShader(gl, type, source) {
+var makeShader = function makeShader(gl, type, source) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -323,10 +306,15 @@ var makeShader = exports.makeShader = function makeShader(gl, type, source) {
     gl.deleteShader(shader);
 };
 
-var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShader, fragmentShader) {
+// Export methods
+
+var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShaderSource, fragmentShaderSource) {
     var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
+    var vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     var program = gl.createProgram();
+
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
@@ -367,23 +355,35 @@ var getStandardAttribLocations = exports.getStandardAttribLocations = function g
 };
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _shaderUtils = __webpack_require__(3);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _glInstance = __webpack_require__(1);
+var _utils = __webpack_require__(2);
+
+var _glInstance = __webpack_require__(0);
 
 var _glInstance2 = _interopRequireDefault(_glInstance);
 
-var _renderLoop = __webpack_require__(2);
+var _shader = __webpack_require__(5);
+
+var _shader2 = _interopRequireDefault(_shader);
+
+var _renderLoop = __webpack_require__(1);
 
 var _renderLoop2 = _interopRequireDefault(_renderLoop);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var vertexShaderSource = '#version 300 es\n    in vec3 a_position;\n\n    uniform float u_pointSize;\n\n    void main () {\n        gl_PointSize = u_pointSize;\n        gl_Position = vec4(a_position, 1.0);\n    }\n';
 var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n    out vec4 finalColor;\n\n    void main () {\n        float dist = distance(gl_PointCoord, vec2(0.5));\n        if (dist < 0.5) {\n            finalColor = vec4(0.0, 0.0, 0.0, 1.0);\n        } else {\n            discard;\n        }\n    }\n';
@@ -398,10 +398,7 @@ document.body.appendChild(canvas);
 var renderLoop = new _renderLoop2.default();
 var glInstance = new _glInstance2.default(canvas).setSize(w / 3, h / 3).clear();
 var gl = glInstance.getContext();
-
-var vertexShader = (0, _shaderUtils.makeShader)(gl, gl.VERTEX_SHADER, vertexShaderSource);
-var fragmentShader = (0, _shaderUtils.makeShader)(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-var program = (0, _shaderUtils.makeProgram)(gl, vertexShader, fragmentShader);
+var program = (0, _utils.makeProgram)(gl, vertexShaderSource, fragmentShaderSource);
 
 gl.useProgram(program);
 var a_positionLocation = gl.getAttribLocation(program, 'a_position');
@@ -416,12 +413,118 @@ gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.enableVertexAttribArray(a_positionLocation);
 gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0);
 
+var TestShader = function (_Shader) {
+    _inherits(TestShader, _Shader);
+
+    function TestShader(gl) {
+        _classCallCheck(this, TestShader);
+
+        var vertexShaderSource = '';
+        var fragmentShaderSource = '';
+
+        var _this = _possibleConstructorReturn(this, (TestShader.__proto__ || Object.getPrototypeOf(TestShader)).call(this, gl, vertexShaderSource, fragmentShaderSource));
+
+        _this.uniformLocations.u_pointSize = gl.getUniformLocation(_this.program, 'u_pointSize');
+        // this.uniformLocations.u_angle =
+        return _this;
+    }
+
+    _createClass(TestShader, [{
+        key: 'set',
+        value: function set(size, angle) {}
+    }]);
+
+    return TestShader;
+}(_shader2.default);
+
 renderLoop.start(function (deltaTime) {
     gl.uniform1f(u_pointSizeLocation, 200.0);
     glInstance.clear();
     gl.drawArrays(gl.POINT, 0, 1);
-    console.log(deltaTime);
 });
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+// Global constants
+var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
+var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
+var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
+var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
+var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
+var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _utils = __webpack_require__(2);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Shader = function () {
+    function Shader(gl, vertexShaderSource, fragmentShaderSource) {
+        _classCallCheck(this, Shader);
+
+        this.program = (0, _utils.makeProgram)(gl, vertexShaderSource, fragmentShaderSource);
+
+        if (this.program) {
+            this.gl = gl;
+            gl.useProgram(this.program);
+            this.attribLocations = getStandardAttribLocations(gl, this.program);
+            this.uniformLocations = {}; // todo
+        }
+    }
+
+    _createClass(Shader, [{
+        key: 'init',
+        value: function init() {}
+    }, {
+        key: 'renderModel',
+        value: function renderModel() {}
+    }, {
+        key: 'activate',
+        value: function activate() {
+            this.gl.useProgram(this.program);
+            return this;
+        }
+    }, {
+        key: 'deactivate',
+        value: function deactivate() {
+            this.gl.useProgram(null);
+            return this;
+        }
+
+        // for when the shader is no longer needed
+
+    }, {
+        key: 'dispose',
+        value: function dispose() {
+            if (this.gl.getParameter(this.gl.CURRENT_PROGRAM) === this.program) this.gl.useProgram(null);
+            this.gl.deleteProgram(this.program);
+        }
+    }]);
+
+    return Shader;
+}();
+
+exports.default = Shader;
 
 /***/ })
 /******/ ]);
