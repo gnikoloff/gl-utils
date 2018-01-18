@@ -1,12 +1,12 @@
 const webpack = require('webpack');
 const path = require('path');
 
-const srcPath = path.join(__dirname, 'app');
+const srcPath = path.join(__dirname, 'georgi-gl');
 const buildPath = path.join(__dirname, 'public/js');
 
 const config = {
   context: srcPath,
-  entry: path.join(srcPath, 'js', 'app.js'),
+  entry: path.join(srcPath, 'app.js'),
   output: {
     path: buildPath,
     filename: 'bundle.js'
