@@ -73,11 +73,15 @@
 "use strict";
 
 
+var _glUtils = __webpack_require__(2);
+
 var _glInstance = __webpack_require__(1);
 
 var _glInstance2 = _interopRequireDefault(_glInstance);
 
-var _glUtils = __webpack_require__(2);
+var _renderLoop = __webpack_require__(4);
+
+var _renderLoop2 = _interopRequireDefault(_renderLoop);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -86,10 +90,12 @@ var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n 
 
 var w = window.innerWidth;
 var h = window.innerHeight;
+var oldTime = 0;
 
 var canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
 
+var renderLoop = new _renderLoop2.default();
 var glInstance = new _glInstance2.default(canvas).setSize(w / 3, h / 3).clear();
 var gl = glInstance.getContext();
 
@@ -106,23 +112,16 @@ var positions = new Float32Array([0.0, 0.0, 0.0]);
 var positionBuffer = glInstance.createArrayBuffer(positions);
 
 gl.useProgram(program);
-
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.enableVertexAttribArray(a_positionLocation);
 gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0);
 
-onRenderFrame();
-function onRenderFrame() {
-    var newTime = window.performance.now() / 1000;
-    var delta = newTime - oldTime;
-    oldTime = newTime;
-
-    window.requestAnimationFrame(onRenderFrame);
-
-    gl.uniform1f(u_pointSizeLocation, 5.0 + Math.sin(oldTime) * 50.0);
+renderLoop.start(function (deltaTime) {
+    gl.uniform1f(u_pointSizeLocation, 200.0);
     glInstance.clear();
     gl.drawArrays(gl.POINT, 0, 1);
-}
+    console.log(deltaTime);
+});
 
 /***/ }),
 /* 1 */
@@ -137,6 +136,12 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _glConstants = __webpack_require__(5);
+
+var constants = _interopRequireWildcard(_glConstants);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GLInstance = function () {
@@ -145,6 +150,9 @@ var GLInstance = function () {
 
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2');
+        if (!this.gl) console.error('WebGL2.0 is not supported.');
+
+        this.meshesCache = [];
 
         this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
     }
@@ -163,6 +171,84 @@ var GLInstance = function () {
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
             return buffer;
         }
+
+        // Turns arrays into GL buffers 
+        // Then setup a VAO to predefine the buffers 
+        // for standard shader attributes (position, normal, uv, index).
+
+        // VAO will hold all the state needed for a single draw call
+
+    }, {
+        key: 'createMeshVAO',
+        value: function createMeshVAO(props) {
+            var gl = this.gl;
+
+            var rtn = { drawMode: gl.TRIANGLES };
+
+            if (props.verticesArray) {
+                rtn.vertexBuffer = gl.createBuffer();
+                rtn.vertexComponentLen = 3;
+                rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen;
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, 3, gl.FLOAT, false, 0, 0);
+            }
+
+            // Set up position
+            if (props.verticesArray) {
+                rtn.vertexBuffer = gl.createBuffer();
+                rtn.vertexComponentLen = 3;
+                rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen;
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, rtn.vertexComponentLen, gl.FLOAT, false, 0, 0);
+            }
+
+            // Set up normal
+            if (props.normalsArray) {
+                rtn.normalsBuffer = gl.createBuffer();
+                rtn.normalComponentLen = 3;
+                rtn.normalCount = props.normalsArray.length / rtn.normalComponentLen;
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, rtn.normalsBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, props.normalsArray, gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_NORMAL_LOC, rtn.normalComponentLen, gl.FLOAT, false, 0, 0);
+            }
+
+            // Set up uv
+            if (props.uvsArray) {
+                rtn.uvsBuffer = gl.createBuffer();
+                rtn.uvsComponentLen = 3;
+                rtn.uvsCount = props.uvsArray.length / rtn.uvsComponentLen;
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, rtn.uvsBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, props.uvsArray, gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_UV_LOC, rtn.uvsComponentLen, gl.FLOAT, false, 0, 0);
+            }
+
+            // Set up indexes
+            if (props.indexesArray) {
+                rtn.indexBuffer = gl.createBuffer();
+                rtn.indexCount = props.indexesArray.length;
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rtn.indexBuffer);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(props.indexesArray), gl.STATIC_DRAW);
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+            }
+
+            // clean up
+            // unbind the VAO - very important!
+            gl.bindVertexArray(null);
+            // unbind any buffers that might be set
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+            this.meshesCache[props.name] = rtn;
+            return rtn;
+        }
+
+        // helpers
+
     }, {
         key: 'getContext',
         value: function getContext() {
@@ -244,6 +330,79 @@ var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShader, f
 
     return program;
 };
+
+/***/ }),
+/* 3 */,
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RenderLoop = function () {
+    function RenderLoop(fps) {
+        _classCallCheck(this, RenderLoop);
+
+        this.oldTime = 0;
+        this.updateAnimationFrame = this.updateAnimationFrame.bind(this);
+
+        this.cb = null;
+    }
+
+    _createClass(RenderLoop, [{
+        key: "start",
+        value: function start(cb) {
+            this.cb = cb;
+            this.updateAnimationFrame();
+        }
+    }, {
+        key: "stop",
+        value: function stop(cb) {
+            window.cancelAnimationFrame(this.rAf);
+            if (cb) cb();
+        }
+    }, {
+        key: "updateAnimationFrame",
+        value: function updateAnimationFrame() {
+            this.rAf = window.requestAnimationFrame(this.updateAnimationFrame);
+            var currentTime = performance.now() / 1000;
+            var deltaTime = currentTime - this.oldTime;
+            this.oldTime = currentTime;
+
+            this.cb(deltaTime);
+        }
+    }]);
+
+    return RenderLoop;
+}();
+
+exports.default = RenderLoop;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+// Global constants
+var ATTR_POSITION_NAME = exports.ATTR_POSITION_NAME = 'a_position';
+var ATTR_POSITION_LOC = exports.ATTR_POSITION_LOC = 0;
+var ATTR_NORMAL_NAME = exports.ATTR_NORMAL_NAME = 'a_normal';
+var ATTR_NORMAL_LOC = exports.ATTR_NORMAL_LOC = 1;
+var ATTR_UV_NAME = exports.ATTR_UV_NAME = 'a_uv';
+var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
 
 /***/ })
 /******/ ]);
