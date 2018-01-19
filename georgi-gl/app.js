@@ -30,7 +30,6 @@ const fragmentShaderSource = `#version 300 es
 
 let w = window.innerWidth
 let h = window.innerHeight
-let oldTime = 0
 
 const canvas = document.createElement('canvas')
 document.body.appendChild(canvas)
@@ -39,7 +38,6 @@ const renderLoop = new RenderLoop()
 const glInstance = new GLInstance(canvas).setSize(w / 3, h / 3).clear()
 const gl = glInstance.getContext()
 const program = makeProgram(gl, vertexShaderSource, fragmentShaderSource)
-
 
 gl.useProgram(program)
 const a_positionLocation  = gl.getAttribLocation(program, 'a_position')
@@ -72,5 +70,4 @@ renderLoop.start((deltaTime) => {
     gl.uniform1f(u_pointSizeLocation, 200.0)
     glInstance.clear()
     gl.drawArrays(gl.POINT, 0, 1) 
-    
 })

@@ -1,4 +1,4 @@
-import { makeProgram } from './utils'
+import { makeProgram, getStandardAttribLocations } from './utils'
 
 export default class Shader {
     constructor (gl, vertexShaderSource, fragmentShaderSource) {
