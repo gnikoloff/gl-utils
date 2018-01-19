@@ -205,7 +205,6 @@ var GLInstance = function () {
         if (appendToDOM) document.body.appendChild(this.canvas);
 
         this.meshesCache = [];
-
         this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
         this.gl.instance = this;
@@ -420,6 +419,7 @@ var GridAxis = function () {
 
         this.width = props.width || 1.85;
         this.linesNum = props.linesNum || 2;
+        this.showAxis = props.showAxis || true;
 
         var vertexArray = this.makeVertexArray();
 
@@ -470,24 +470,20 @@ var GridAxis = function () {
             var half = width / 2;
 
             for (var i = 0; i <= linesNum; i += 1) {
-                // vertical line
+
                 // x, y, z, colorIndex
                 var p = -half + i * step;
-                verts.push(p, half, 0, 0);
-                verts.push(p, -half, 0, 1);
+                verts.push(p, 0, half, 0, p, 0, -half, 0);
 
                 // horizontal line
                 // x, y, z, colorIndex
                 p = half - i * step;
-                verts.push(-half, p, 0, 0);
-                verts.push(half, p, 0, 1);
+                verts.push(-half, 0, p, 0, half, 0, p, 0);
             }
 
-            // diagonal lines
-            verts.push(-half, -half, 0, 2);
-            verts.push(half, half, 0, 3);
-            verts.push(-half, half, 0, 2);
-            verts.push(half, -half, 0, 3);
+            if (this.showAxis) {
+                verts.push(-half * 0.5, 0, 0, 1, half * 0.5, 0, 0, 1, 0, -half * 0.5, 0, 3, 0, half * 0.5, 0, 3, 0, 0, -half * 0.5, 2, 0, 0, half * 0.5, 2);
+            }
 
             return verts;
         }
@@ -619,6 +615,7 @@ var Shader = function () {
         key: 'setPerspective',
         value: function setPerspective(matrix) {
             this.gl.uniformMatrix4fv(this.uniformLocations.perspective, false, matrix);
+            console.log(matrix);
             return this;
         }
     }, {
@@ -716,6 +713,14 @@ var _renderLoop = __webpack_require__(3);
 
 var _renderLoop2 = _interopRequireDefault(_renderLoop);
 
+var _perspectiveCamera = __webpack_require__(20);
+
+var _perspectiveCamera2 = _interopRequireDefault(_perspectiveCamera);
+
+var _cameraController = __webpack_require__(21);
+
+var _cameraController2 = _interopRequireDefault(_cameraController);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -724,7 +729,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var vertexShaderSource = '#version 300 es\n    layout(location=0) in vec3 a_position;\n    layout(location=4) in float a_color; // color index at 4th position of position buffer.\n\n    uniform mat4 u_modelViewMatrix;\n    uniform vec3 u_color[4];\n\n    out vec4 v_color;\n\n    void main () { \n        v_color = vec4(u_color[int(a_color)], 1.0);\n        gl_Position = u_modelViewMatrix * vec4(a_position, 1.0);\n    }\n';
+var vertexShaderSource = '#version 300 es\n    layout(location=0) in vec3 a_position;\n    layout(location=4) in float a_color; // color index at 4th position of position buffer.\n\n    uniform mat4 u_perspectiveMatrix;\n    uniform mat4 u_modelViewMatrix;\n    uniform mat4 u_cameraMatrix;\n\n    uniform vec3 u_color[4];\n\n    out vec4 v_color;\n\n    void main () { \n        v_color = vec4(u_color[int(a_color)], 1.0);\n        gl_Position = u_perspectiveMatrix * u_cameraMatrix * u_modelViewMatrix * vec4(a_position, 1.0);\n    }\n';
 var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n    in vec4 v_color;\n    out vec4 finalColor;\n\n    void main () {\n        finalColor = v_color;\n    }\n';
 
 var TestShader = function (_Shader) {
@@ -760,21 +765,28 @@ var h = window.innerHeight;
 var canvas = document.createElement('canvas');
 
 var renderLoop = new _renderLoop2.default();
-var glInstance = new _glInstance2.default(canvas).setSize(w / 2, h / 2).clear();
+var glInstance = new _glInstance2.default(canvas).setSize(w, h).clear();
 var gl = glInstance.getContext();
 
-var shader = new TestShader(gl, [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.5, 0.0]);
-var gridPrimitive = new _gridAxis2.default(gl, {
-    width: 1,
-    linesNum: 5
-});
+var camera = new _perspectiveCamera2.default(gl);
+camera.transform.position.set(0, 0.5, 2);
+var cameraCtrl = new _cameraController2.default(gl, camera);
+
+var shader = new TestShader(gl, [0.75, 0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+shader.activate().setPerspective(camera.projectionMatrix).deactivate();
+console.log(shader.uniformLocations);
+
+var gridPrimitive = new _gridAxis2.default(gl, { width: 10, linesNum: 5 });
 var grid = new _model2.default(gridPrimitive);
+
 var time = 0;
+
 renderLoop.start(function (deltaTime) {
     time += deltaTime;
+
     glInstance.clear();
-    grid.setScale(1.2, 1.2, 1.0).setRotation(Math.cos(time * 5.0) * 70.0, 0, Math.sin(time * 5.0) * 45.0).setPosition(Math.cos(time * 5.0) * 0.2, 0, 0);
-    shader.activate().renderModel(grid.preRender());
+
+    shader.activate().setCameraMatrix(camera.updateViewMatrix()).renderModel(grid.preRender()).deactivate();
 });
 
 /***/ }),
@@ -8008,6 +8020,209 @@ const forEach = (function() {
 /* harmony export (immutable) */ __webpack_exports__["forEach"] = forEach;
 
 
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _math = __webpack_require__(8);
+
+var _transform = __webpack_require__(9);
+
+var _transform2 = _interopRequireDefault(_transform);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/*
+    * Creates a perspective camea
+    * @param { Object } props      - camera config object
+    * @param { number } props.fov  - Field Of View
+    * @param { number } props.near - Near
+    * @param { number } props.far  - Far
+*/
+var PerspectiveCamera = function () {
+    function PerspectiveCamera(gl) {
+        var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        _classCallCheck(this, PerspectiveCamera);
+
+        this.projectionMatrix = new Float32Array(16);
+
+        var fov = props.fov || 45;
+        var near = props.near || 0.1;
+        var far = props.far || 100;
+
+        this.MODE_FREE = 0;
+        this.MODE_ORBIT = 1;
+
+        var ratio = gl.canvas.width / gl.canvas.height;
+        _math.Matrix4.perspective(this.projectionMatrix, fov, ratio, near, far);
+
+        this.transform = new _transform2.default(); // transform to control the position of the camera
+        this.viewMatrix = new Float32Array(16); // inverse matrix of the transform
+
+        this.mode = this.MODE_ORBIT; // what sort of ctrl mode to use
+    }
+
+    _createClass(PerspectiveCamera, [{
+        key: 'panX',
+        value: function panX(val) {
+            if (this.mode === this.MODE_ORBIT) return;
+            this.updateViewMatrix();
+            this.transform.position.x += this.transform.right[0] * val;
+            this.transform.position.y += this.transform.right[1] * val;
+            this.transform.position.z += this.transform.right[2] * val;
+        }
+    }, {
+        key: 'panY',
+        value: function panY(val) {
+            this.updateViewMatrix();
+            this.transform.position.y += this.transform.up[1] * val;
+            if (this.mode === this.MODE_ORBIT) return; // can only move up and down the y axis in orbit mode
+            this.transform.position.x += this.transform.up[0] * val;
+            this.transform.position.z += this.transform.up[2] * val;
+        }
+    }, {
+        key: 'panZ',
+        value: function panZ(val) {
+            this.updateViewMatrix();
+            if (this.mode === this.MODE_ORBIT) {
+                this.transform.position.z += val;
+            } else {
+                this.transform.position.x += this.transform.forward[0] * val;
+                this.transform.position.y += this.transform.forward[1] * val;
+                this.transform.position.z += this.transform.forward[2] * val;
+            }
+        }
+    }, {
+        key: 'updateViewMatrix',
+        value: function updateViewMatrix() {
+            if (this.mode === this.MODE_FREE) {
+                this.transform.matView.reset().vtranslate(this.transform.position).rotateX(this.transform.rotation.x * this.transform.deg2Rad).rotateY(this.transform.rotation.y * this.transform.deg2Rad);
+            } else {
+                this.transform.matView.reset().rotateX(this.transform.rotation.x * this.transform.deg2Rad).rotateY(this.transform.rotation.y * this.transform.deg2Rad).vtranslate(this.transform.position);
+            }
+            this.transform.updateDirection();
+
+            // !!! Important !!!
+            // the camera works by doing the inverse transformation on all meshes!!
+            // the camera itself is a lie!!!   
+            _math.Matrix4.invert(this.viewMatrix, this.transform.matView.raw);
+            return this.viewMatrix;
+        }
+    }]);
+
+    return PerspectiveCamera;
+}();
+
+exports.default = PerspectiveCamera;
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CameraController = function () {
+    function CameraController(gl, camera) {
+        _classCallCheck(this, CameraController);
+
+        var bbox = gl.canvas.getBoundingClientRect();
+
+        this.canvas = gl.canvas;
+        this.camera = camera;
+
+        this.rotateRate = -300; // how fast to rotate, degrees per dragging delta
+        this.panRate = 5; // how fast to pan, max unit per dragging delta
+        this.zoomRate = 200; // how fast to zoom in / out
+
+        this.offsetX = bbox.left;
+        this.offsetY = bbox.top;
+
+        this.initX = 0; // start x, y position on mouse down
+        this.initY = 0;
+        this.prevX = 0; // previous x, y position on mouse down
+        this.prevY = 0;
+
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
+        this.onMouseWheel = this.onMouseWheel.bind(this);
+
+        this.canvas.addEventListener('mousedown', this.onMouseDown, false);
+        this.canvas.addEventListener('mousewheel', this.onMouseWheel, false);
+    }
+
+    _createClass(CameraController, [{
+        key: 'onMouseDown',
+        value: function onMouseDown(e) {
+            e.preventDefault();
+            this.initX = this.prevX = e.pageX - this.offsetX;
+            this.initY = this.prevY = e.pageY - this.offsetY;
+
+            this.canvas.addEventListener('mousemove', this.onMouseMove, false);
+            this.canvas.addEventListener('mouseup', this.onMouseUp, false);
+        }
+    }, {
+        key: 'onMouseMove',
+        value: function onMouseMove(e) {
+            e.preventDefault();
+            var x = e.pageX - this.offsetX;
+            var y = e.pageY - this.offsetY;
+            var dx = x - this.prevX;
+            var dy = y - this.prevY;
+
+            if (!e.shiftKey) {
+                this.camera.transform.rotation.y += dx * (this.rotateRate / this.canvas.width);
+                this.camera.transform.rotation.x += dy * (this.rotateRate / this.canvas.height);
+            } else {
+                this.camera.panX(-dx * (this.panRate / this.canvas.width));
+                this.camera.panY(dy * (this.panRate / this.canvas.height));
+            }
+
+            this.prevX = x;
+            this.prevY = y;
+        }
+    }, {
+        key: 'onMouseUp',
+        value: function onMouseUp(e) {
+            e.preventDefault();
+            this.canvas.removeEventListener('mousemove', this.onMouseMove);
+            this.canvas.removeEventListener('mouseup', this.onMouseUp, false);
+        }
+    }, {
+        key: 'onMouseWheel',
+        value: function onMouseWheel(e) {
+            e.preventDefault();
+            var delta = Math.max(-1, Math.min(1, e.wheelDelta));
+            this.camera.panZ(delta * (this.zoomRate / this.canvas.height));
+        }
+    }]);
+
+    return CameraController;
+}();
+
+exports.default = CameraController;
 
 /***/ })
 /******/ ]);

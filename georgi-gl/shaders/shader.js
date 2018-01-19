@@ -20,6 +20,7 @@ export default class Shader {
 
     setPerspective (matrix) {
         this.gl.uniformMatrix4fv(this.uniformLocations.perspective, false, matrix)
+        console.log(matrix)
         return this
     }
 

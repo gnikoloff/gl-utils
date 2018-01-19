@@ -10,7 +10,6 @@ export default class GLInstance {
         if (appendToDOM) document.body.appendChild(this.canvas)
 
         this.meshesCache = []
-
         this.gl.clearColor(1.0, 1.0, 1.0, 1.0)
 
         this.gl.instance = this
