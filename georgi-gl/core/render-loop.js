@@ -1,7 +1,11 @@
+// const Stats = require('stats-js')
+
 export default class RenderLoop {
-    constructor () {
+    constructor (debug = true) {
         this.oldTime = 0
         this.updateAnimationFrame = this.updateAnimationFrame.bind(this)
+
+        // do stats-js
 
         this.cb = null
     }

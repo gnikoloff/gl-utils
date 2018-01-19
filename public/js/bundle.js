@@ -3676,12 +3676,18 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+// const Stats = require('stats-js')
+
 var RenderLoop = function () {
     function RenderLoop() {
+        var debug = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
         _classCallCheck(this, RenderLoop);
 
         this.oldTime = 0;
         this.updateAnimationFrame = this.updateAnimationFrame.bind(this);
+
+        // do stats-js
 
         this.cb = null;
     }
@@ -3749,7 +3755,6 @@ var w = window.innerWidth;
 var h = window.innerHeight;
 
 var canvas = document.createElement('canvas');
-
 var renderLoop = new _renderLoop2.default(true);
 var glInstance = new _glInstance2.default(canvas).setSize(w, h).clear();
 var gl = glInstance.getContext();
@@ -3757,13 +3762,26 @@ var gl = glInstance.getContext();
 var camera = new _perspectiveCamera2.default(gl);
 camera.transform.position.set(0, 0.5, 2);
 var cameraCtrl = new _cameraController2.default(gl, camera);
-
-_helper2.default.init(gl, camera);
-
-renderLoop.start(function (deltaFrame) {
-    glInstance.clear();
-    _helper2.default.renderFrame(deltaFrame);
+var helper = new _helper2.default(gl, camera, {
+    width: 5,
+    linesNum: 10,
+    position: [0.0, 0.0, 0.0]
 });
+
+window.onresize = onResize;
+renderLoop.start(renderFrame);
+
+function renderFrame(deltaFrame) {
+    glInstance.clear();
+    helper.renderFrame(deltaFrame);
+}
+
+function onResize() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+    glInstance.setSize(w, h);
+    camera.updateViewMatrix();
+}
 
 /***/ }),
 /* 14 */
@@ -8163,6 +8181,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _geometry = __webpack_require__(31);
 
 var _geometry2 = _interopRequireDefault(_geometry);
@@ -8177,22 +8197,36 @@ var _mesh2 = _interopRequireDefault(_mesh);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = {
-    init: function init(gl, camera) {
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GridHelper = function () {
+    function GridHelper(gl, camera, props) {
+        var _ref;
+
+        _classCallCheck(this, GridHelper);
+
         this.camera = camera;
 
-        this.geometry = new _geometry2.default(gl, { width: 10, linesNum: 5 });
+        this.geometry = new _geometry2.default(gl, { width: props.width, linesNum: props.linesNum });
         this.material = new _helperMaterial2.default(gl, [0.75, 0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
         this.material.activate().setPerspective(camera.projectionMatrix).deactivate();
-        this.grid = new _mesh2.default(this.geometry);
-        this.mesh = new _mesh2.default(this.grid);
-        return this;
-    },
-    renderFrame: function renderFrame(deltaFrame) {
-        this.material.activate().setCameraMatrix(this.camera.updateViewMatrix()).renderModel(this.grid.preRender()).deactivate();
-        return this;
+        this.mesh = (_ref = new _mesh2.default(this.geometry)).setPosition.apply(_ref, _toConsumableArray(props.position));
     }
-};
+
+    _createClass(GridHelper, [{
+        key: 'renderFrame',
+        value: function renderFrame(deltaFrame) {
+            this.material.activate().setCameraMatrix(this.camera.updateViewMatrix()).renderModel(this.mesh.preRender()).deactivate();
+            return this;
+        }
+    }]);
+
+    return GridHelper;
+}();
+
+exports.default = GridHelper;
 
 /***/ }),
 /* 31 */
