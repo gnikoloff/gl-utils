@@ -1,7 +1,7 @@
-import Material from '../../materials/helper-material'
+import Material from '../base-material'
 import vertexShaderSource from './vertex-shader'
 import fragmentShaderSource from './fragment-shader'
-console.log(Material)
+
 export default class HelperMaterial extends Material {
     constructor (gl, colorsArray) {
         super(gl, vertexShaderSource, fragmentShaderSource)

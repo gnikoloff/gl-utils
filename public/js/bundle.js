@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 14);
+/******/ 	return __webpack_require__(__webpack_require__.s = 13);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -170,13 +170,98 @@ var ATTR_UV_LOC = exports.ATTR_UV_LOC = 2;
 
 
 Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.getStandardUniformLocations = exports.getStandardAttribLocations = exports.makeProgram = undefined;
+
+var _constants = __webpack_require__(1);
+
+var constants = _interopRequireWildcard(_constants);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var makeShader = function makeShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
+
+    console.log(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+};
+
+// Export methods
+var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShaderSource, fragmentShaderSource) {
+    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+    var vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = gl.createProgram();
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Failed to link program:');
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        return;
+    }
+
+    if (doValidate) {
+        gl.validateProgram(program);
+        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+            console.error('Failed to validate the program:');
+            console.log(gl.getProgramInfoLog(program));
+            gl.deleteProgram(program);
+            return;
+        }
+    }
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    return program;
+};
+
+// Get the locations of standard attributes that are mostly used.
+// Location will be -1 if attribute is not found
+var getStandardAttribLocations = exports.getStandardAttribLocations = function getStandardAttribLocations(gl, program) {
+    return {
+        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
+        normal: gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
+        uvs: gl.getAttribLocation(program, constants.ATTR_UV_NAME)
+    };
+};
+
+// Get the locations of standard uniforms that are mostly used.
+var getStandardUniformLocations = exports.getStandardUniformLocations = function getStandardUniformLocations(gl, program) {
+    return {
+        perspective: gl.getUniformLocation(program, 'u_perspectiveMatrix'),
+        modelMatrix: gl.getUniformLocation(program, 'u_modelViewMatrix'),
+        cameraMatrix: gl.getUniformLocation(program, 'u_cameraMatrix'),
+        mainTexture: gl.getUniformLocation(program, 'u_mainTexture')
+    };
+};
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.Matrix4 = exports.Vector3 = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-__webpack_require__(19);
+__webpack_require__(20);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -813,7 +898,7 @@ var Matrix4 = exports.Matrix4 = function () {
 }();
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -825,7 +910,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _math = __webpack_require__(2);
+var _math = __webpack_require__(3);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -897,70 +982,6 @@ var Transform = function () {
 }();
 
 exports.default = Transform;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _helperMaterial = __webpack_require__(25);
-
-var _helperMaterial2 = _interopRequireDefault(_helperMaterial);
-
-var _vertexShader = __webpack_require__(18);
-
-var _vertexShader2 = _interopRequireDefault(_vertexShader);
-
-var _fragmentShader = __webpack_require__(16);
-
-var _fragmentShader2 = _interopRequireDefault(_fragmentShader);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-console.log(_helperMaterial2.default);
-
-var HelperMaterial = function (_Material) {
-    _inherits(HelperMaterial, _Material);
-
-    function HelperMaterial(gl, colorsArray) {
-        _classCallCheck(this, HelperMaterial);
-
-        var _this = _possibleConstructorReturn(this, (HelperMaterial.__proto__ || Object.getPrototypeOf(HelperMaterial)).call(this, gl, _vertexShader2.default, _fragmentShader2.default));
-
-        _this.uniformLocations.u_color = gl.getUniformLocation(_this.program, 'u_color');
-        gl.uniform3fv(_this.uniformLocations.u_color, colorsArray);
-
-        // lets unbind 
-        gl.useProgram(null);
-        return _this;
-    }
-
-    _createClass(HelperMaterial, [{
-        key: 'set',
-        value: function set(size, angle) {
-            this.gl.uniform1f(this.uniformLocations.u_pointSize, size);
-            return this;
-        }
-    }]);
-
-    return HelperMaterial;
-}(_helperMaterial2.default);
-
-exports.default = HelperMaterial;
 
 /***/ }),
 /* 5 */
@@ -3546,9 +3567,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _math = __webpack_require__(2);
+var _math = __webpack_require__(3);
 
-var _transform = __webpack_require__(3);
+var _transform = __webpack_require__(4);
 
 var _transform2 = _interopRequireDefault(_transform);
 
@@ -3695,140 +3716,12 @@ var RenderLoop = function () {
 exports.default = RenderLoop;
 
 /***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.getStandardUniformLocations = exports.getStandardAttribLocations = exports.makeProgram = undefined;
-
-var _constants = __webpack_require__(1);
-
-var constants = _interopRequireWildcard(_constants);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var makeShader = function makeShader(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
-
-    console.log(gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-};
-
-// Export methods
-var makeProgram = exports.makeProgram = function makeProgram(gl, vertexShaderSource, fragmentShaderSource) {
-    var doValidate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-
-    var vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = gl.createProgram();
-
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Failed to link program:');
-        console.log(gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-        return;
-    }
-
-    if (doValidate) {
-        gl.validateProgram(program);
-        if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-            console.error('Failed to validate the program:');
-            console.log(gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
-            return;
-        }
-    }
-
-    gl.deleteShader(vertexShader);
-    gl.deleteShader(fragmentShader);
-
-    return program;
-};
-
-// Get the locations of standard attributes that are mostly used.
-// Location will be -1 if attribute is not found
-var getStandardAttribLocations = exports.getStandardAttribLocations = function getStandardAttribLocations(gl, program) {
-    return {
-        position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
-        normal: gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
-        uvs: gl.getAttribLocation(program, constants.ATTR_UV_NAME)
-    };
-};
-
-// Get the locations of standard uniforms that are mostly used.
-var getStandardUniformLocations = exports.getStandardUniformLocations = function getStandardUniformLocations(gl, program) {
-    return {
-        perspective: gl.getUniformLocation(program, 'u_perspectiveMatrix'),
-        modelMatrix: gl.getUniformLocation(program, 'u_modelViewMatrix'),
-        cameraMatrix: gl.getUniformLocation(program, 'u_cameraMatrix'),
-        mainTexture: gl.getUniformLocation(program, 'u_mainTexture')
-    };
-};
-
-/***/ }),
+/* 12 */,
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _geometry = __webpack_require__(17);
-
-var _geometry2 = _interopRequireDefault(_geometry);
-
-var _material = __webpack_require__(4);
-
-var _material2 = _interopRequireDefault(_material);
-
-var _mesh = __webpack_require__(15);
-
-var _mesh2 = _interopRequireDefault(_mesh);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = {
-    init: function init(gl, camera) {
-        this.camera = camera;
-
-        this.geometry = new _geometry2.default(gl, { width: 10, linesNum: 5 });
-        this.material = new _material2.default(gl, [0.75, 0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
-        this.material.activate().setPerspective(camera.projectionMatrix).deactivate();
-        this.grid = new _mesh2.default(this.geometry);
-        this.mesh = new _mesh2.default(this.grid);
-        return this;
-    },
-    renderFrame: function renderFrame(deltaFrame) {
-        this.material.activate().setCameraMatrix(this.camera.updateViewMatrix()).renderModel(this.grid.preRender()).deactivate();
-        return this;
-    }
-};
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _shaderUtils = __webpack_require__(12);
 
 var _glInstance = __webpack_require__(9);
 
@@ -3846,9 +3739,9 @@ var _cameraController = __webpack_require__(8);
 
 var _cameraController2 = _interopRequireDefault(_cameraController);
 
-var _gridHelper = __webpack_require__(13);
+var _helper = __webpack_require__(30);
 
-var _gridHelper2 = _interopRequireDefault(_gridHelper);
+var _helper2 = _interopRequireDefault(_helper);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3857,7 +3750,7 @@ var h = window.innerHeight;
 
 var canvas = document.createElement('canvas');
 
-var renderLoop = new _renderLoop2.default();
+var renderLoop = new _renderLoop2.default(true);
 var glInstance = new _glInstance2.default(canvas).setSize(w, h).clear();
 var gl = glInstance.getContext();
 
@@ -3865,19 +3758,15 @@ var camera = new _perspectiveCamera2.default(gl);
 camera.transform.position.set(0, 0.5, 2);
 var cameraCtrl = new _cameraController2.default(gl, camera);
 
-_gridHelper2.default.init(gl, camera);
+_helper2.default.init(gl, camera);
 
-var time = 0;
-
-renderLoop.start(function (deltaTime) {
-    time += deltaTime;
-
+renderLoop.start(function (deltaFrame) {
     glInstance.clear();
-    _gridHelper2.default.renderFrame();
+    _helper2.default.renderFrame(deltaFrame);
 });
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3889,7 +3778,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _transform = __webpack_require__(3);
+var _transform = __webpack_require__(4);
 
 var _transform2 = _interopRequireDefault(_transform);
 
@@ -3962,146 +3851,23 @@ var Mesh = function () {
 exports.default = Mesh;
 
 /***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = "#version 300 es\n    precision highp float;\n    \n    in vec4 v_color;\n    out vec4 finalColor;\n\n    void main () {\n        finalColor = v_color;\n    }\n";
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _constants = __webpack_require__(1);
-
-var constants = _interopRequireWildcard(_constants);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var GridAxis = function () {
-    function GridAxis(gl) {
-        var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-        _classCallCheck(this, GridAxis);
-
-        this.width = props.width || 1.85;
-        this.linesNum = props.linesNum || 2;
-        this.showAxis = props.showAxis || true;
-
-        var vertexArray = this.makeVertexArray();
-
-        var attribColorLocation = 4;
-        var mesh = { drawMode: gl.LINES, vao: gl.createVertexArray() };
-
-        mesh.vertexComponentsLen = 4;
-        mesh.vertexCount = vertexArray.length / mesh.vertexComponentsLen;
-        var stride = Float32Array.BYTES_PER_ELEMENT * mesh.vertexComponentsLen;
-
-        // setup buffer for both positon and colorLocation
-        mesh.vertexBuffer = gl.createBuffer();
-        gl.bindVertexArray(mesh.vao);
-        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC);
-        gl.enableVertexAttribArray(attribColorLocation);
-
-        gl.vertexAttribPointer(constants.ATTR_POSITION_LOC, // attrib location
-        3, // how big is the vector by number count
-        gl.FLOAT, // what type of number are we passing in
-        false, // does it have to be normalized? 
-        stride, // how big is a vertex chunk of data
-        0 // offset by how much
-        );
-
-        gl.vertexAttribPointer(attribColorLocation, // new shader has 'in float a_color' as the second attrib
-        1, // the attrib is just a single float
-        gl.FLOAT, false, stride, Float32Array.BYTES_PER_ELEMENT * 3 // skip the first 3 float in our vertex chunk
-        );
-
-        // cleanup
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.instance.meshesCache['grid'] = mesh;
-
-        return mesh;
-    }
-
-    _createClass(GridAxis, [{
-        key: 'makeVertexArray',
-        value: function makeVertexArray() {
-            var verts = [];
-            var width = this.width;
-            var linesNum = this.linesNum;
-            var step = width / linesNum;
-            var half = width / 2;
-
-            for (var i = 0; i <= linesNum; i += 1) {
-
-                // x, y, z, colorIndex
-                var p = -half + i * step;
-                verts.push(p, 0, half, 0, p, 0, -half, 0);
-
-                // horizontal line
-                // x, y, z, colorIndex
-                p = half - i * step;
-                verts.push(-half, 0, p, 0, half, 0, p, 0);
-            }
-
-            if (this.showAxis) {
-                verts.push(-half * 0.5, 0, 0, 1, half * 0.5, 0, 0, 1, 0, -half * 0.5, 0, 3, 0, half * 0.5, 0, 3, 0, 0, -half * 0.5, 2, 0, 0, half * 0.5, 2);
-            }
-
-            return verts;
-        }
-    }]);
-
-    return GridAxis;
-}();
-
-exports.default = GridAxis;
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = "#version 300 es\n    layout(location=0) in vec3 a_position;\n    layout(location=4) in float a_color; // color index at 4th position of position buffer.\n\n    uniform mat4 u_perspectiveMatrix;\n    uniform mat4 u_modelViewMatrix;\n    uniform mat4 u_cameraMatrix;\n\n    uniform vec3 u_color[4];\n\n    out vec4 v_color;\n\n    void main () { \n        v_color = vec4(u_color[int(a_color)], 1.0);\n        gl_Position = u_perspectiveMatrix * u_cameraMatrix * u_modelViewMatrix * vec4(a_position, 1.0);\n    }\n";
-
-/***/ }),
-/* 19 */
+/* 15 */,
+/* 16 */,
+/* 17 */,
+/* 18 */,
+/* 19 */,
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__ = __webpack_require__(7);
 /* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "glMatrix", function() { return __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__; });
@@ -4154,7 +3920,7 @@ THE SOFTWARE. */
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4624,7 +4390,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5126,7 +4892,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6864,7 +6630,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7555,7 +7321,7 @@ const setAxes = (function() {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8198,7 +7964,7 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8210,7 +7976,93 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _shaderUtils = __webpack_require__(12);
+var _baseMaterial = __webpack_require__(29);
+
+var _baseMaterial2 = _interopRequireDefault(_baseMaterial);
+
+var _vertexShader = __webpack_require__(28);
+
+var _vertexShader2 = _interopRequireDefault(_vertexShader);
+
+var _fragmentShader = __webpack_require__(27);
+
+var _fragmentShader2 = _interopRequireDefault(_fragmentShader);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var HelperMaterial = function (_Material) {
+    _inherits(HelperMaterial, _Material);
+
+    function HelperMaterial(gl, colorsArray) {
+        _classCallCheck(this, HelperMaterial);
+
+        var _this = _possibleConstructorReturn(this, (HelperMaterial.__proto__ || Object.getPrototypeOf(HelperMaterial)).call(this, gl, _vertexShader2.default, _fragmentShader2.default));
+
+        _this.uniformLocations.u_color = gl.getUniformLocation(_this.program, 'u_color');
+        gl.uniform3fv(_this.uniformLocations.u_color, colorsArray);
+
+        // lets unbind 
+        gl.useProgram(null);
+        return _this;
+    }
+
+    _createClass(HelperMaterial, [{
+        key: 'set',
+        value: function set(size, angle) {
+            this.gl.uniform1f(this.uniformLocations.u_pointSize, size);
+            return this;
+        }
+    }]);
+
+    return HelperMaterial;
+}(_baseMaterial2.default);
+
+exports.default = HelperMaterial;
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = "#version 300 es\n    precision highp float;\n    \n    in vec4 v_color;\n    out vec4 finalColor;\n\n    void main () {\n        finalColor = v_color;\n    }\n";
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = "#version 300 es\n    layout(location=0) in vec3 a_position;\n    layout(location=4) in float a_color; // color index at 4th position of position buffer.\n\n    uniform mat4 u_perspectiveMatrix;\n    uniform mat4 u_modelViewMatrix;\n    uniform mat4 u_cameraMatrix;\n\n    uniform vec3 u_color[4];\n\n    out vec4 v_color;\n\n    void main () { \n        v_color = vec4(u_color[int(a_color)], 1.0);\n        gl_Position = u_perspectiveMatrix * u_cameraMatrix * u_modelViewMatrix * vec4(a_position, 1.0);\n    }\n";
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _shaderUtils = __webpack_require__(2);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -8299,6 +8151,152 @@ var Material = function () {
 }();
 
 exports.default = Material;
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _geometry = __webpack_require__(31);
+
+var _geometry2 = _interopRequireDefault(_geometry);
+
+var _helperMaterial = __webpack_require__(26);
+
+var _helperMaterial2 = _interopRequireDefault(_helperMaterial);
+
+var _mesh = __webpack_require__(14);
+
+var _mesh2 = _interopRequireDefault(_mesh);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = {
+    init: function init(gl, camera) {
+        this.camera = camera;
+
+        this.geometry = new _geometry2.default(gl, { width: 10, linesNum: 5 });
+        this.material = new _helperMaterial2.default(gl, [0.75, 0.75, 0.75, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+        this.material.activate().setPerspective(camera.projectionMatrix).deactivate();
+        this.grid = new _mesh2.default(this.geometry);
+        this.mesh = new _mesh2.default(this.grid);
+        return this;
+    },
+    renderFrame: function renderFrame(deltaFrame) {
+        this.material.activate().setCameraMatrix(this.camera.updateViewMatrix()).renderModel(this.grid.preRender()).deactivate();
+        return this;
+    }
+};
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _constants = __webpack_require__(1);
+
+var constants = _interopRequireWildcard(_constants);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GridAxis = function () {
+    function GridAxis(gl) {
+        var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        _classCallCheck(this, GridAxis);
+
+        this.width = props.width || 1.85;
+        this.linesNum = props.linesNum || 2;
+        this.showAxis = props.showAxis || true;
+
+        var vertexArray = this.makeVertexArray();
+
+        var attribColorLocation = 4;
+        var mesh = { drawMode: gl.LINES, vao: gl.createVertexArray() };
+
+        mesh.vertexComponentsLen = 4;
+        mesh.vertexCount = vertexArray.length / mesh.vertexComponentsLen;
+        var stride = Float32Array.BYTES_PER_ELEMENT * mesh.vertexComponentsLen;
+
+        // setup buffer for both positon and colorLocation
+        mesh.vertexBuffer = gl.createBuffer();
+        gl.bindVertexArray(mesh.vao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
+
+        gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC);
+        gl.enableVertexAttribArray(attribColorLocation);
+
+        gl.vertexAttribPointer(constants.ATTR_POSITION_LOC, // attrib location
+        3, // how big is the vector by number count
+        gl.FLOAT, // what type of number are we passing in
+        false, // does it have to be normalized? 
+        stride, // how big is a vertex chunk of data
+        0 // offset by how much
+        );
+
+        gl.vertexAttribPointer(attribColorLocation, // new shader has 'in float a_color' as the second attrib
+        1, // the attrib is just a single float
+        gl.FLOAT, false, stride, Float32Array.BYTES_PER_ELEMENT * 3 // skip the first 3 float in our vertex chunk
+        );
+
+        // cleanup
+        gl.bindVertexArray(null);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        gl.instance.meshesCache['grid'] = mesh;
+
+        return mesh;
+    }
+
+    _createClass(GridAxis, [{
+        key: 'makeVertexArray',
+        value: function makeVertexArray() {
+            var verts = [];
+            var width = this.width;
+            var linesNum = this.linesNum;
+            var step = width / linesNum;
+            var half = width / 2;
+
+            for (var i = 0; i <= linesNum; i += 1) {
+
+                // x, y, z, colorIndex
+                var p = -half + i * step;
+                verts.push(p, 0, half, 0, p, 0, -half, 0);
+
+                // horizontal line
+                // x, y, z, colorIndex
+                p = half - i * step;
+                verts.push(-half, 0, p, 0, half, 0, p, 0);
+            }
+
+            if (this.showAxis) {
+                verts.push(-half * 0.5, 0, 0, 1, half * 0.5, 0, 0, 1, 0, -half * 0.5, 0, 3, 0, half * 0.5, 0, 3, 0, 0, -half * 0.5, 2, 0, 0, half * 0.5, 2);
+            }
+
+            return verts;
+        }
+    }]);
+
+    return GridAxis;
+}();
+
+exports.default = GridAxis;
 
 /***/ })
 /******/ ]);
