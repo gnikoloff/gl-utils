@@ -7,7 +7,7 @@ export default class CameraController {
 
         this.rotateRate = -300 // how fast to rotate, degrees per dragging delta
         this.panRate    = 5    // how fast to pan, max unit per dragging delta
-        this.zoomDate   = 200  // how fast to zoom in / out
+        this.zoomRate   = 200  // how fast to zoom in / out
 
         this.offsetX = bbox.left
         this.offsetY = bbox.top
@@ -28,6 +28,7 @@ export default class CameraController {
     }
 
     onMouseDown (e) {
+        e.preventDefault()
         this.initX = this.prevX = e.pageX - this.offsetX
         this.initY = this.prevY = e.pageY - this.offsetY
 
@@ -36,6 +37,7 @@ export default class CameraController {
     }
 
     onMouseMove (e) {
+        e.preventDefault()
         const x = e.pageX - this.offsetX
         const y = e.pageY - this.offsetY
         const dx = x - this.prevX
@@ -54,12 +56,14 @@ export default class CameraController {
     }
 
     onMouseUp (e) {
+        e.preventDefault()
         this.canvas.removeEventListener('mousemove', this.onMouseMove)
         this.canvas.removeEventListener('mouseup', this.onMouseUp, false)
     }
 
     onMouseWheel (e) {
-        const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)))
+        e.preventDefault()
+        const delta = Math.max(-1, Math.min(1, e.wheelDelta))
         this.camera.panZ(delta * (this.zoomRate / this.canvas.height))
     }
 

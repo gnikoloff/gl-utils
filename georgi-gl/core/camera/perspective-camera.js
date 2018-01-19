@@ -1,5 +1,5 @@
-import { Matrix4 } from '../math/math'
-import Transform from '../math/transform'
+import { Matrix4 } from '../../math/math'
+import Transform from '../../math/transform'
 
 /*
     * Creates a perspective camea
@@ -10,7 +10,7 @@ import Transform from '../math/transform'
 */
 export default class PerspectiveCamera {
     constructor (gl, props = {}) {
-        this.projectionMatrix = new Float32Array(16)
+        this.projectionMatrix = new Float32Array(16)    
 
         const fov  = props.fov  || 45
         const near = props.near || 0.1
@@ -47,7 +47,7 @@ export default class PerspectiveCamera {
     panZ (val) {
         this.updateViewMatrix()
         if (this.mode === this.MODE_ORBIT) {
-            this.transform.position.z += v 
+            this.transform.position.z += val
         } else {
             this.transform.position.x += this.transform.forward[0] * val
             this.transform.position.y += this.transform.forward[1] * val
@@ -59,12 +59,12 @@ export default class PerspectiveCamera {
         if (this.mode === this.MODE_FREE) {
             this.transform.matView.reset()
                 .vtranslate(this.transform.position)
-                .rotateX(this.transform.rotation.x * Transform.deg2Rad)
-                .rotateY(this.transform.rotation.y * Transform.deg2Rad)
+                .rotateX(this.transform.rotation.x * this.transform.deg2Rad)
+                .rotateY(this.transform.rotation.y * this.transform.deg2Rad)
         } else {
             this.transform.matView.reset()
-                .rotateX(this.transform.rotation.x * Transform.deg2Rad)
-                .rotateY(this.transform.rotation.y * Transform.deg2Rad)
+                .rotateX(this.transform.rotation.x * this.transform.deg2Rad)
+                .rotateY(this.transform.rotation.y * this.transform.deg2Rad)
                 .vtranslate(this.transform.position)
         }
         this.transform.updateDirection()
