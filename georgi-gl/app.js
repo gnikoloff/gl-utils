@@ -3,39 +3,39 @@ import GLInstance from './core/gl-instance'
 
 import Shader from './shaders/shader'
 import Model from './meshes/model'
+import Grid from './meshes/grid-axis'
 import RenderLoop from './core/render-loop'
 
 const vertexShaderSource = `#version 300 es
     in vec3 a_position;
+    layout(location=4) in float a_color; // color index at 4th position of position buffer.
 
-    uniform float u_pointSize;
+    uniform vec3 u_color[4];
 
-    void main () {
-        gl_PointSize = u_pointSize;
+    out vec4 v_color;
+
+    void main () { 
+        v_color = vec4(u_color[int(a_color)], 1.0);
         gl_Position = vec4(a_position, 1.0);
     }
 `
 const fragmentShaderSource = `#version 300 es
     precision highp float;
     
+    in vec4 v_color;
     out vec4 finalColor;
 
     void main () {
-        float dist = distance(gl_PointCoord, vec2(0.5));
-        if (dist < 0.5) {
-            finalColor = vec4(0.0, 0.0, 0.0, 1.0);
-        } else {
-            discard;
-        }
+        finalColor = v_color;
     }
 `
 
 class TestShader extends Shader {
-    constructor (gl) {
+    constructor (gl, colorsArray) {
         super(gl, vertexShaderSource, fragmentShaderSource)
 
-        this.uniformLocations.u_pointSize = gl.getUniformLocation(this.program, 'u_pointSize')
-        this.uniformLocations.u_angle     = gl.getUniformLocation(this.program, 'u_angle')
+        this.uniformLocations.u_color = gl.getUniformLocation(this.program, 'u_color')
+        gl.uniform3fv(this.uniformLocations.u_color, colorsArray)
 
         // lets unbind 
         gl.useProgram(null)
@@ -48,28 +48,25 @@ class TestShader extends Shader {
 
 let w = window.innerWidth
 let h = window.innerHeight
-let oldTime = 0
 
 const canvas = document.createElement('canvas')
-document.body.appendChild(canvas)
 
 const renderLoop = new RenderLoop()
-const glInstance = new GLInstance(canvas).setSize(w / 3, h / 3).clear()
+const glInstance = new GLInstance(canvas).setSize(w / 2, h / 2).clear()
 const gl = glInstance.getContext()
-const program = makeProgram(gl, vertexShaderSource, fragmentShaderSource)
 
-// There are many instances when we want a single mesh object shared between many models, for example trees.
-// One mesh with many transforms essentialy
-const shader = new TestShader(gl)
-const mesh = glInstance.createMeshVAO({
-    name: 'dots',
-    drawMode: 'POINTS',
-    verticesArray: [ 0.0, 0.0, 0.0, -0.1, 0.1, 0.0, 0.1, 0.1, 0.0, 0.1, -0.1, 0.0, -0.1, -0.1, 0.0 ]
+const shader = new TestShader(gl, [ 1.0, 0.0, 0.0,  0.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.5, 0.5, 0.0 ])
+const gridPrimitive = new Grid(gl, {
+    width:    1,
+    linesNum: 5
 })
-const model = new Model(mesh)
+const grid = new Model(gridPrimitive)
 
 renderLoop.start((deltaTime) => {
     glInstance.clear()    
 
-    shader.activate().set(20, 1).renderModel(model)
+    shader
+        .activate()
+        .renderModel(grid)
+
 })

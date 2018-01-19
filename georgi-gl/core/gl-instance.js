@@ -1,15 +1,19 @@
 import * as constants from './gl-constants'
 
 export default class GLInstance {
-    constructor (canvas) {
+    constructor (canvas, appendToDOM = true) {
         this.canvas = canvas
         this.gl     = canvas.getContext('webgl2')
         
         if (!this.gl) console.error('WebGL2.0 is not supported.')
 
+        if (appendToDOM) document.body.appendChild(this.canvas)
+
         this.meshesCache = []
 
         this.gl.clearColor(1.0, 1.0, 1.0, 1.0)
+
+        this.gl.instance = this
     }
 
     createArrayBuffer (floatArr, isStatic = true) {
