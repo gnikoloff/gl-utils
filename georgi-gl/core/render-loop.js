@@ -1,5 +1,5 @@
 export default class RenderLoop {
-    constructor (fps) {
+    constructor () {
         this.oldTime = 0
         this.updateAnimationFrame = this.updateAnimationFrame.bind(this)
 

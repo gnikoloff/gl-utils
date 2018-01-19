@@ -1,4 +1,4 @@
-import { makeProgram } from './utils'
+import { makeProgram, getStandardAttribLocations } from './utils'
 
 export default class Shader {
     constructor (gl, vertexShaderSource, fragmentShaderSource) {
@@ -13,9 +13,25 @@ export default class Shader {
         }
     }
 
-    init () {}
+    // rendering
 
-    renderModel () {}
+    preRender () {
+
+    }
+
+    renderModel (model) {
+        this.gl.bindVertexArray(model.mesh.vao)
+        if (model.mesh.indexCount) {
+            this.gl.drawElements(model.mesh.drawMode, model.mesh.indexCount, gl.UNSIGNED_SHORT, 0)
+        } else {
+            this.gl.drawArrays(model.mesh.drawMode, 0, model.mesh.vertexCount)
+        }
+        this.gl.bindVertexArray(null)
+        
+        return this
+    }
+
+    // utils
 
     activate () {
         this.gl.useProgram(this.program)

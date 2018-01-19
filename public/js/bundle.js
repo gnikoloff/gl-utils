@@ -210,64 +210,67 @@ var GLInstance = function () {
             return buffer;
         }
 
-        // Turns arrays into GL buffers 
-        // Then setup a VAO to predefine the buffers 
-        // for standard shader attributes (position, normal, uv, index).
-
-        // VAO will hold all the state needed for a single draw call
+        /*
+            * Turns arrays in to GL buffers
+            * Create a new Vertex Array Object to predefine the buffers for standard shader attribs (position, normal, uv, index)
+            * VAO will hold all the state needed for a single draw call
+             * @param { Object } props - VAO config object
+            * @param { string } - Draw mode
+            * @param { name } props.name - VAO identifier
+            * @param { array } props.verticesArray - array of vertices
+            * @param { array } props.normalsArray - array of normals 
+            * @param { array } props.uvsArray - array of uvs 
+            * @param { array } props.indexesArray - array of indexes
+        */
 
     }, {
         key: 'createMeshVAO',
         value: function createMeshVAO(props) {
             var gl = this.gl;
 
-            var rtn = { drawMode: gl.TRIANGLES };
+            var rtn = { drawMode: this.gl[props.drawMode] };
 
-            if (props.verticesArray) {
-                rtn.vertexBuffer = gl.createBuffer();
-                rtn.vertexComponentLen = 3;
-                rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen;
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW);
-                gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, 3, gl.FLOAT, false, 0, 0);
-            }
+            rtn.vao = gl.createVertexArray();
+            gl.bindVertexArray(rtn.vao);
 
             // Set up position
-            if (props.verticesArray) {
+            if (props.verticesArray !== undefined && props.verticesArray != null) {
                 rtn.vertexBuffer = gl.createBuffer();
                 rtn.vertexComponentLen = 3;
                 rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen;
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW);
-                gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, rtn.vertexComponentLen, gl.FLOAT, false, 0, 0);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.verticesArray), gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC);
+                gl.vertexAttribPointer(constants.ATTR_POSITION_LOC, rtn.vertexComponentLen, gl.FLOAT, false, 0, 0);
             }
 
             // Set up normal
-            if (props.normalsArray) {
+            if (props.normalsArray !== undefined && props.normalsArray != null) {
                 rtn.normalsBuffer = gl.createBuffer();
                 rtn.normalComponentLen = 3;
                 rtn.normalCount = props.normalsArray.length / rtn.normalComponentLen;
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, rtn.normalsBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, props.normalsArray, gl.STATIC_DRAW);
-                gl.enableVertexAttribArray(constants.ATTR_NORMAL_LOC, rtn.normalComponentLen, gl.FLOAT, false, 0, 0);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.normalsArray), gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_NORMAL_LOC);
+                gl.vertexAttribPointer(constants.ATTR_NORMAL_LOC, rtn.normalComponentLen, gl.FLOAT, false, 0, 0);
             }
 
             // Set up uv
-            if (props.uvsArray) {
+            if (props.uvsArray !== undefined && props.uvsArray != null) {
                 rtn.uvsBuffer = gl.createBuffer();
                 rtn.uvsComponentLen = 3;
                 rtn.uvsCount = props.uvsArray.length / rtn.uvsComponentLen;
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, rtn.uvsBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, props.uvsArray, gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.uvsArray), gl.STATIC_DRAW);
+                gl.enableVertexAttribArray(constants.ATTR_UV_LOC);
                 gl.enableVertexAttribArray(constants.ATTR_UV_LOC, rtn.uvsComponentLen, gl.FLOAT, false, 0, 0);
             }
 
             // Set up indexes
-            if (props.indexesArray) {
+            if (props.indexesArray !== undefined && props.indexesArray != null) {
                 rtn.indexBuffer = gl.createBuffer();
                 rtn.indexCount = props.indexesArray.length;
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rtn.indexBuffer);
@@ -276,7 +279,6 @@ var GLInstance = function () {
             }
 
             // clean up time
-
             // very important!
             // unbind the VAO
             gl.bindVertexArray(null);
@@ -334,7 +336,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RenderLoop = function () {
-    function RenderLoop(fps) {
+    function RenderLoop() {
         _classCallCheck(this, RenderLoop);
 
         this.oldTime = 0;
@@ -399,17 +401,32 @@ var Shader = function () {
         if (this.program) {
             this.gl = gl;
             gl.useProgram(this.program);
-            this.attribLocations = getStandardAttribLocations(gl, this.program);
+            this.attribLocations = (0, _utils.getStandardAttribLocations)(gl, this.program);
             this.uniformLocations = {}; // todo
         }
     }
 
+    // rendering
+
     _createClass(Shader, [{
-        key: 'init',
-        value: function init() {}
+        key: 'preRender',
+        value: function preRender() {}
     }, {
         key: 'renderModel',
-        value: function renderModel() {}
+        value: function renderModel(model) {
+            this.gl.bindVertexArray(model.mesh.vao);
+            if (model.mesh.indexCount) {
+                this.gl.drawElements(model.mesh.drawMode, model.mesh.indexCount, gl.UNSIGNED_SHORT, 0);
+            } else {
+                this.gl.drawArrays(model.mesh.drawMode, 0, model.mesh.vertexCount);
+            }
+            this.gl.bindVertexArray(null);
+
+            return this;
+        }
+
+        // utils
+
     }, {
         key: 'activate',
         value: function activate() {
@@ -457,6 +474,10 @@ var _shader = __webpack_require__(4);
 
 var _shader2 = _interopRequireDefault(_shader);
 
+var _model = __webpack_require__(6);
+
+var _model2 = _interopRequireDefault(_model);
+
 var _renderLoop = __webpack_require__(3);
 
 var _renderLoop2 = _interopRequireDefault(_renderLoop);
@@ -472,6 +493,33 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var vertexShaderSource = '#version 300 es\n    in vec3 a_position;\n\n    uniform float u_pointSize;\n\n    void main () {\n        gl_PointSize = u_pointSize;\n        gl_Position = vec4(a_position, 1.0);\n    }\n';
 var fragmentShaderSource = '#version 300 es\n    precision highp float;\n    \n    out vec4 finalColor;\n\n    void main () {\n        float dist = distance(gl_PointCoord, vec2(0.5));\n        if (dist < 0.5) {\n            finalColor = vec4(0.0, 0.0, 0.0, 1.0);\n        } else {\n            discard;\n        }\n    }\n';
 
+var TestShader = function (_Shader) {
+    _inherits(TestShader, _Shader);
+
+    function TestShader(gl) {
+        _classCallCheck(this, TestShader);
+
+        var _this = _possibleConstructorReturn(this, (TestShader.__proto__ || Object.getPrototypeOf(TestShader)).call(this, gl, vertexShaderSource, fragmentShaderSource));
+
+        _this.uniformLocations.u_pointSize = gl.getUniformLocation(_this.program, 'u_pointSize');
+        _this.uniformLocations.u_angle = gl.getUniformLocation(_this.program, 'u_angle');
+
+        // lets unbind 
+        gl.useProgram(null);
+        return _this;
+    }
+
+    _createClass(TestShader, [{
+        key: 'set',
+        value: function set(size, angle) {
+            this.gl.uniform1f(this.uniformLocations.u_pointSize, size);
+            return this;
+        }
+    }]);
+
+    return TestShader;
+}(_shader2.default);
+
 var w = window.innerWidth;
 var h = window.innerHeight;
 var oldTime = 0;
@@ -484,48 +532,53 @@ var glInstance = new _glInstance2.default(canvas).setSize(w / 3, h / 3).clear();
 var gl = glInstance.getContext();
 var program = (0, _utils.makeProgram)(gl, vertexShaderSource, fragmentShaderSource);
 
-gl.useProgram(program);
-var a_positionLocation = gl.getAttribLocation(program, 'a_position');
-var u_pointSizeLocation = gl.getUniformLocation(program, 'u_pointSize');
-gl.useProgram(null);
-
-var positions = new Float32Array([0.0, 0.0, 0.0]);
-var positionBuffer = glInstance.createArrayBuffer(positions);
-
-gl.useProgram(program);
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.enableVertexAttribArray(a_positionLocation);
-gl.vertexAttribPointer(a_positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-var TestShader = function (_Shader) {
-    _inherits(TestShader, _Shader);
-
-    function TestShader(gl) {
-        _classCallCheck(this, TestShader);
-
-        var vertexShaderSource = '';
-        var fragmentShaderSource = '';
-
-        var _this = _possibleConstructorReturn(this, (TestShader.__proto__ || Object.getPrototypeOf(TestShader)).call(this, gl, vertexShaderSource, fragmentShaderSource));
-
-        _this.uniformLocations.u_pointSize = gl.getUniformLocation(_this.program, 'u_pointSize');
-        // this.uniformLocations.u_angle =
-        return _this;
-    }
-
-    _createClass(TestShader, [{
-        key: 'set',
-        value: function set(size, angle) {}
-    }]);
-
-    return TestShader;
-}(_shader2.default);
+// There are many instances when we want a single mesh object shared between many models, for example trees.
+// One mesh with many transforms essentialy
+var shader = new TestShader(gl);
+var mesh = glInstance.createMeshVAO({
+    name: 'dots',
+    drawMode: 'POINTS',
+    verticesArray: [0.0, 0.0, 0.0, -0.1, 0.1, 0.0, 0.1, 0.1, 0.0, 0.1, -0.1, 0.0, -0.1, -0.1, 0.0]
+});
+var model = new _model2.default(mesh);
 
 renderLoop.start(function (deltaTime) {
-    gl.uniform1f(u_pointSizeLocation, 200.0);
     glInstance.clear();
-    gl.drawArrays(gl.POINT, 0, 1);
+
+    shader.activate().set(20, 1).renderModel(model);
 });
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Model = function () {
+    function Model(mesh) {
+        _classCallCheck(this, Model);
+
+        this.mesh = mesh;
+    }
+
+    _createClass(Model, [{
+        key: "init",
+        value: function init() {}
+    }]);
+
+    return Model;
+}();
+
+exports.default = Model;
 
 /***/ })
 /******/ ]);

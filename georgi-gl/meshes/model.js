@@ -1,6 +1,6 @@
 export default class Model {
-    constructor (meshData) {
-        this.meshData = meshData
+    constructor (mesh) {
+        this.mesh = mesh
     }
 
     init () {
