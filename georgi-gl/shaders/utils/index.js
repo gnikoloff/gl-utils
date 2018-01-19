@@ -55,3 +55,13 @@ export const getStandardAttribLocations = (gl, program) => {
         uvs:      gl.getAttribLocation(program, constants.ATTR_UV_NAME)
     }
 }
+
+// Get the locations of standard uniforms that are mostly used.
+export const getStandardUniformLocations = (gl, program) => {
+    return {
+        perspective:  gl.getUniformLocation(program, 'u_perspectiveMatrix'),
+        modelMatrix:  gl.getUniformLocation(program, 'u_modelViewMatrix'),
+        cameraMatrix: gl.getUniformLocation(program, 'u_cameraMatrix'),
+        mainTexture:  gl.getUniformLocation(program, 'u_mainTexture')
+    }
+}

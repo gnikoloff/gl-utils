@@ -1,4 +1,8 @@
-import { makeProgram, getStandardAttribLocations } from './utils'
+import { 
+    makeProgram, 
+    getStandardAttribLocations,
+    getStandardUniformLocations
+} from './utils'
 
 export default class Shader {
     constructor (gl, vertexShaderSource, fragmentShaderSource) {
@@ -7,19 +11,36 @@ export default class Shader {
         if (this.program) {
             this.gl = gl
             gl.useProgram(this.program)
-            this.attribLocations = getStandardAttribLocations(gl, this.program)
-            this.uniformLocations = {} // todo
+
+            this.attribLocations  = getStandardAttribLocations(gl, this.program)
+            this.uniformLocations = getStandardUniformLocations(gl, this.program)
 
         }
     }
 
-    // rendering
+    setPerspective (matrix) {
+        this.gl.uniformMatrix4fv(this.uniformLocations.perspective, false, matrix)
+        return this
+    }
 
+    setModelMatrix (matrix) {
+        this.gl.uniformMatrix4fv(this.uniformLocations.modelMatrix, false, matrix)
+        return this
+    }
+
+    setCameraMatrix (matrix) {
+        this.gl.uniformMatrix4fv(this.uniformLocations.cameraMatrix, false, matrix)
+        return this
+    }
+
+    // rendering
     preRender () {
 
     }
 
     renderModel (model) {
+        this.setModelMatrix(model.transform.getViewMatrix())
+
         this.gl.bindVertexArray(model.mesh.vao)
         if (model.mesh.indexCount) {
             this.gl.drawElements(model.mesh.drawMode, model.mesh.indexCount, gl.UNSIGNED_SHORT, 0)

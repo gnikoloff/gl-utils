@@ -16,7 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "compression": "^1.6.2",
-    "express": "^4.14.1"
+    "express": "^4.14.1",
+    "gl-matrix": "^2.4.0"
   },
   "devDependencies": {
     "babel-core": "^6.23.1",

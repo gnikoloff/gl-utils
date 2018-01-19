@@ -7,16 +7,17 @@ import Grid from './meshes/grid-axis'
 import RenderLoop from './core/render-loop'
 
 const vertexShaderSource = `#version 300 es
-    in vec3 a_position;
+    layout(location=0) in vec3 a_position;
     layout(location=4) in float a_color; // color index at 4th position of position buffer.
 
+    uniform mat4 u_modelViewMatrix;
     uniform vec3 u_color[4];
 
     out vec4 v_color;
 
     void main () { 
         v_color = vec4(u_color[int(a_color)], 1.0);
-        gl_Position = vec4(a_position, 1.0);
+        gl_Position = u_modelViewMatrix * vec4(a_position, 1.0);
     }
 `
 const fragmentShaderSource = `#version 300 es
@@ -61,12 +62,16 @@ const gridPrimitive = new Grid(gl, {
     linesNum: 5
 })
 const grid = new Model(gridPrimitive)
-
+let time =0 
 renderLoop.start((deltaTime) => {
+    time += deltaTime
     glInstance.clear()    
-
+    grid
+        .setScale(1.2, 1.2, 1.0)
+        .setRotation(Math.cos(time * 5.0) * 70.0, 0, Math.sin(time * 5.0) * 45.0)
+        .setPosition(Math.cos(time * 5.0) * 0.2, 0, 0)
     shader
         .activate()
-        .renderModel(grid)
+        .renderModel(grid.preRender())
 
 })
