@@ -1,15 +1,18 @@
-import * as constants from './gl-constants'
+import * as constants from './constants'
 
 export default class GLInstance {
-    constructor (canvas) {
+    constructor (canvas, appendToDOM = true) {
         this.canvas = canvas
         this.gl     = canvas.getContext('webgl2')
         
         if (!this.gl) console.error('WebGL2.0 is not supported.')
 
-        this.meshesCache = []
+        if (appendToDOM) document.body.appendChild(this.canvas)
 
+        this.meshesCache = []
         this.gl.clearColor(1.0, 1.0, 1.0, 1.0)
+
+        this.gl.instance = this
     }
 
     createArrayBuffer (floatArr, isStatic = true) {
@@ -23,60 +26,64 @@ export default class GLInstance {
         return buffer
     }
 
-    // Turns arrays into GL buffers 
-    // Then setup a VAO to predefine the buffers 
-    // for standard shader attributes (position, normal, uv, index).
+    /*
+        * Turns arrays in to GL buffers
+        * Create a new Vertex Array Object to predefine the buffers for standard shader attribs (position, normal, uv, index)
+        * VAO will hold all the state needed for a single draw call
 
-    // VAO will hold all the state needed for a single draw call
+        * @param { Object } props - VAO config object
+        * @param { string } - Draw mode
+        * @param { name } props.name - VAO identifier
+        * @param { array } props.verticesArray - array of vertices
+        * @param { array } props.normalsArray - array of normals 
+        * @param { array } props.uvsArray - array of uvs 
+        * @param { array } props.indexesArray - array of indexes
+    */
     createMeshVAO (props) {
         const { gl } = this
-        const rtn = { drawMode: gl.TRIANGLES }
+        const rtn = { drawMode: this.gl[props.drawMode] }
 
-        if (props.verticesArray) {
-            rtn.vertexBuffer = gl.createBuffer()
-            rtn.vertexComponentLen = 3
-            rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW)
-            gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, 3, gl.FLOAT, false, 0, 0)
-        }
-
+        rtn.vao = gl.createVertexArray()
+        gl.bindVertexArray(rtn.vao)
+        
         // Set up position
-        if (props.verticesArray) {
+        if (props.verticesArray !== undefined && props.verticesArray != null) {
             rtn.vertexBuffer = gl.createBuffer()
             rtn.vertexComponentLen = 3
             rtn.vertexCount = props.verticesArray.length / rtn.vertexComponentLen
 
             gl.bindBuffer(gl.ARRAY_BUFFER, rtn.vertexBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, props.verticesArray, gl.STATIC_DRAW)
-            gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC, rtn.vertexComponentLen, gl.FLOAT, false, 0, 0)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.verticesArray), gl.STATIC_DRAW)
+            gl.enableVertexAttribArray(constants.ATTR_POSITION_LOC)
+            gl.vertexAttribPointer(constants.ATTR_POSITION_LOC, rtn.vertexComponentLen, gl.FLOAT, false, 0, 0)
         }
 
         // Set up normal
-        if (props.normalsArray) {
+        if (props.normalsArray !== undefined && props.normalsArray != null) {
             rtn.normalsBuffer = gl.createBuffer()
             rtn.normalComponentLen = 3
             rtn.normalCount = props.normalsArray.length / rtn.normalComponentLen
 
             gl.bindBuffer(gl.ARRAY_BUFFER, rtn.normalsBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, props.normalsArray, gl.STATIC_DRAW)
-            gl.enableVertexAttribArray(constants.ATTR_NORMAL_LOC, rtn.normalComponentLen, gl.FLOAT, false, 0, 0)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.normalsArray), gl.STATIC_DRAW)
+            gl.enableVertexAttribArray(constants.ATTR_NORMAL_LOC)
+            gl.vertexAttribPointer(constants.ATTR_NORMAL_LOC, rtn.normalComponentLen, gl.FLOAT, false, 0, 0)
         }
 
         // Set up uv
-        if (props.uvsArray) {
+        if (props.uvsArray !== undefined && props.uvsArray != null) {
             rtn.uvsBuffer = gl.createBuffer()
             rtn.uvsComponentLen = 3
             rtn.uvsCount = props.uvsArray.length / rtn.uvsComponentLen
 
             gl.bindBuffer(gl.ARRAY_BUFFER, rtn.uvsBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, props.uvsArray, gl.STATIC_DRAW)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(props.uvsArray), gl.STATIC_DRAW)
+            gl.enableVertexAttribArray(constants.ATTR_UV_LOC)
             gl.enableVertexAttribArray(constants.ATTR_UV_LOC, rtn.uvsComponentLen, gl.FLOAT, false, 0, 0)
         }
 
         // Set up indexes
-        if (props.indexesArray) {
+        if (props.indexesArray !== undefined && props.indexesArray != null) {
             rtn.indexBuffer = gl.createBuffer()
             rtn.indexCount = props.indexesArray.length
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rtn.indexBuffer)
@@ -85,7 +92,6 @@ export default class GLInstance {
         }
 
         // clean up time
-
         // very important!
         // unbind the VAO
         gl.bindVertexArray(null)

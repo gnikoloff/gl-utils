@@ -1,4 +1,4 @@
-import * as constants from '../../core/gl-constants'
+import * as constants from './constants'
 
 const makeShader = (gl, type, source) => {
     const shader = gl.createShader(type)
@@ -11,7 +11,6 @@ const makeShader = (gl, type, source) => {
 }
 
 // Export methods
-
 export const makeProgram = (gl, vertexShaderSource, fragmentShaderSource, doValidate = false) => {
     const vertexShader = makeShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
     const fragmentShader = makeShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
@@ -53,5 +52,15 @@ export const getStandardAttribLocations = (gl, program) => {
         position: gl.getAttribLocation(program, constants.ATTR_POSITION_NAME),
         normal:   gl.getAttribLocation(program, constants.ATTR_NORMAL_NAME),
         uvs:      gl.getAttribLocation(program, constants.ATTR_UV_NAME)
+    }
+}
+
+// Get the locations of standard uniforms that are mostly used.
+export const getStandardUniformLocations = (gl, program) => {
+    return {
+        perspective:  gl.getUniformLocation(program, 'u_perspectiveMatrix'),
+        modelMatrix:  gl.getUniformLocation(program, 'u_modelViewMatrix'),
+        cameraMatrix: gl.getUniformLocation(program, 'u_cameraMatrix'),
+        mainTexture:  gl.getUniformLocation(program, 'u_mainTexture')
     }
 }
