@@ -2,8 +2,9 @@ import * as constants from '../core/gl-constants'
 
 export default class GridAxis {
     constructor (gl, props = {}) {
-        this.width    = props.width || 1.85
+        this.width    = props.width    || 1.85
         this.linesNum = props.linesNum || 2
+        this.showAxis = props.showAxis || true
 
         const vertexArray = this.makeVertexArray()
         
@@ -58,25 +59,34 @@ export default class GridAxis {
         const half     = width / 2
 
         for (let i = 0; i <= linesNum; i += 1) {
-            // vertical line
+            
             // x, y, z, colorIndex
             let p = -half + i * step
-            verts.push(p, half, 0, 0)
-            verts.push(p, -half, 0, 1)
+            verts.push(
+                p, 0, half, 0,
+                p, 0, -half, 0
+            )
 
             // horizontal line
             // x, y, z, colorIndex
             p = half - i * step
-            verts.push(-half, p, 0, 0)
-            verts.push(half, p, 0, 1)
+            verts.push(
+                -half, 0, p, 0,
+                half, 0, p, 0
+            )
 
         }
 
-        // diagonal lines
-        verts.push(-half, -half, 0, 2)
-        verts.push( half,  half, 0, 3)
-        verts.push(-half,  half, 0, 2)
-        verts.push( half, -half, 0, 3)
+        if (this.showAxis) {
+            verts.push(
+                -half * 0.5, 0,           0,          1,
+                 half * 0.5, 0,           0,          1,
+                 0,         -half * 0.5,  0,          3,
+                 0,          half * 0.5,  0,          3,
+                 0,          0,          -half * 0.5, 2,
+                 0,          0,           half * 0.5, 2
+            )
+        }
 
         return verts
     }
